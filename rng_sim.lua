@@ -1,4 +1,13 @@
 #!/usr/bin/env luajit
+local function has_value (tab, val)
+    for index, value in ipairs(tab) do
+        if value == val then
+            return true
+        end
+    end
+
+    return false
+end
 
 function print_table(tbl, indent, breakline)
     if not tbl then
@@ -130,16 +139,32 @@ function pseudorandom_element(_t, seed)
     end
 end
 
-function trigger_invisible_joker(joker_list)
+
+
+function trigger_invisible_joker(joker_list, ij_indx)
     print("===== triggering Invisible Joker RNG =====")
     seed_value = pseudoseed('invisible')
     -- filtering jokers
     local temp_pool = {}
-    for k, v in pairs(joker_list) do
-        if v.name ~= 'Invisible Joker' then
-            table.insert(temp_pool, v)
+    if not ij_indx
+    then 
+        local found_ij = false
+        -- only 1 IJ
+        for k, v in pairs(joker_list) do
+            if v.name == 'Invisible Joker' and not found_ij then
+                found_ij = true
+            else 
+                table.insert(temp_pool, v)
+            end
         end
+    else 
+        for i = 1, #joker_list do 
+            if i ~= ij_indx then 
+                temp_pool[#joker_list +1 ] = joker_list[i]
+            end 
+        end     
     end
+    
 
     cloned_joker_name = pseudorandom_element(temp_pool, seed_value)
     -- updating joker_list
@@ -209,34 +234,12 @@ function roll_for_boss(boss_list, target_boss)
 end
 
 jokers_table = {
- {
-    name = "Chicot"
-}, {
-    name = "Chicot"
-}, {
-    name = "Brainstorm"
-}, {
-    name = "Perkeo",
-    edition = {
-        negative = true
-    }
-},
-{
-    name = "Sock and Buskin"
-},
-{
-    name = "blueprint"
-    , edition = {foil = true}
-},
-{
-    name = "all sixes"
-},
+ 
 }
 
 pseudorandom = generate_starting_seed()
 
-trigger_invisible_joker(jokers_table)
-trigger_ectoplasm(jokers_table)
+-- trigger_ectoplasm(jokers_table)
 boss_list = {
     bl_hook = 0,
     bl_needle = 0,
@@ -263,10 +266,50 @@ boss_list = {
 
 -- for i = 3, 20, 1 do 
 --     print('roll time: ' , i )
-roll_for_boss(boss_list, 'bl_manacle')
+-- roll_for_boss(boss_list, 'bl_manacle')
 -- end 
 
 -- for i = 1, 20 , 1 do 
 
 -- print(reroll_boss(boss_list))
 -- end
+
+joker_adding_stream = {
+{ name = 'scary face'},
+{ name = 'Invisible Joker'},
+{ name = 'chicot'},
+{ name = 'brainstorm'},
+{ name = 'perkeo'},
+{ name = 'sock and buskin'},
+{ name = 'blueprint'},
+{ name = 'Invisible Joker'},
+{ name = 'baron'},
+{ name = 'Invisible Joker'},
+{ name = 'Invisible Joker'},
+{ name = 'Invisible Joker'},
+{ name = 'Mime'},
+-- { name = 'Invisible Joker'},
+-- { name = 'Invisible Joker'},
+}
+
+jokers_list = {}
+-- trigger invisible joker after joker #i is added 
+invis_proc_indx = {4,9,11}
+
+-- remove joker x after add joker #y
+remove_joker_stream = {{ at_idx = 6, remove_jk = 1 }}
+for k, v in pairs(joker_adding_stream)
+do 
+    if remove_joker_stream[1] ~= nil and remove_joker_stream[1].at_idx == k
+    then 
+        print('remove joker')
+        jokers_list[remove_joker_stream[1].remove_jk] = nil
+    end 
+    table.insert(jokers_list, v)
+    if has_value(invis_proc_indx, k)
+    then 
+        trigger_invisible_joker(jokers_list)
+    end
+end 
+
+-- trigger_invisible_joker(jokers_table)
